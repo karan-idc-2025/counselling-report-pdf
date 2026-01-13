@@ -266,11 +266,19 @@ function renderPage1(doc, data) {
     doc.fillColor(COLORS.gray).fontSize(7).font('Helvetica')
         .text(data.finalVerdict, mainContentX + 10, aspY, { width: mainContentWidth - 20 });
 
+    // Track page count BEFORE drawing sidebar
+    const pageCountBeforeSidebar = doc.bufferedPageRange().count;
+    
+    // Track sidebar overflow page
+    let sidebarOverflowPage = null;
+    let sidebarOverflowPageIndex = -1;
+
     // ========== LEFT SIDEBAR (DRAWN SECOND, with page break handling) ==========
     const sidebarContentWidth = sidebarWidth - 20;
 
     // Save current page before drawing sidebar
     const currentPageBeforeSidebar = doc.page;
+    const currentPageIndexBeforeSidebar = doc.bufferedPageRange().start + doc.bufferedPageRange().count - 1;
 
     // Helper to draw sidebar background card
     function drawSidebarCard(startY, pageRef) {
@@ -290,6 +298,13 @@ function renderPage1(doc, data) {
     doc.page = currentPageBeforeSidebar;
     let sidebarY = contentStartY + 12;
 
+    // Track sidebar final Y position on overflow page
+    let sidebarFinalYOnOverflowPage = 0;
+    
+    // Track the Y position when sidebar enters overflow page
+    let sidebarOverflowStartY = 0;
+    let hasDrawnOverflowCard = false;
+    
     // Helper function to check and handle page breaks for sidebar content
     function checkSidebarPageBreak(currentY, spaceNeeded = 30) {
         const pageBottom = PAGE.height - PAGE.margin;
@@ -297,9 +312,13 @@ function renderPage1(doc, data) {
         if (currentY + spaceNeeded > pageBottom) {
             doc.addPage();
             
-            const pageBottom = PAGE.height - PAGE.margin;
-            const cardHeight = pageBottom - PAGE.margin;
-            drawRoundedRect(sidebarX, PAGE.margin, sidebarWidth, cardHeight, 12, COLORS.white, COLORS.lightGray);
+            // Track the overflow page
+            sidebarOverflowPage = doc.page;
+            sidebarOverflowPageIndex = doc.bufferedPageRange().start + doc.bufferedPageRange().count - 1;
+            sidebarOverflowStartY = PAGE.margin;
+            
+            // DON'T draw the full sidebar card - just draw a subtle background
+            // that will be behind the content. Content has its own backgrounds.
             
             return PAGE.margin + 12;
         }
@@ -526,6 +545,44 @@ function renderPage1(doc, data) {
             .text(themeText, themeX + 14, themeLineY + 4, { width: textWidth });
         themeX += badgeWidth + 6;
     });
+    
+    // Calculate final sidebar Y position (add some padding)
+    const finalSidebarY = themeLineY + 30;
+
+    // Track page count AFTER drawing sidebar
+    const pageCountAfterSidebar = doc.bufferedPageRange().count;
+    const sidebarCreatedNewPage = pageCountAfterSidebar > pageCountBeforeSidebar;
+    
+    // If sidebar overflowed, draw the sidebar card border with correct height
+    // We draw ONLY the border (no fill) after content, so content remains visible
+    if (sidebarCreatedNewPage && sidebarOverflowPage) {
+        const savedPage = doc.page;
+        
+        // Switch to overflow page
+        doc.page = sidebarOverflowPage;
+        
+        // Calculate sidebar card height on overflow page
+        const sidebarCardHeight = finalSidebarY - PAGE.margin;
+        
+        // Draw only the border (stroke), no fill - content is already visible
+        doc.save();
+        doc.strokeColor(COLORS.lightGray).lineWidth(1);
+        doc.roundedRect(sidebarX, PAGE.margin, sidebarWidth, sidebarCardHeight, 12).stroke();
+        doc.restore();
+        
+        // Restore original page
+        doc.page = savedPage;
+    }
+
+    // Return sidebar overflow information
+    return {
+        sidebarCreatedNewPage: sidebarCreatedNewPage,
+        sidebarOverflowPage: sidebarOverflowPage,
+        sidebarOverflowPageIndex: sidebarOverflowPageIndex,
+        sidebarX: sidebarX,
+        sidebarWidth: sidebarWidth,
+        sidebarFinalY: finalSidebarY
+    };
 }
 
 module.exports = { renderPage1 };

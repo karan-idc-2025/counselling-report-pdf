@@ -14,16 +14,19 @@ function generateCareerReportPDF(data, outputPath = 'recommendation-report.pdf')
     const doc = new PDFDocument({
         size: 'A4',
         margins: { top: PAGE.margin, bottom: PAGE.margin, left: PAGE.margin, right: PAGE.margin },
-        autoFirstPage: true
+        autoFirstPage: true,
+        bufferPages: true
     });
 
     doc.pipe(fs.createWriteStream(outputPath));
 
-    // Render Page 1
-    renderPage1(doc, data);
-
-    // Render Page 2
-    renderPage2(doc, data);
+    // Render Page 1 and get page info
+    const page1Info = renderPage1(doc, data);
+    
+    console.log('Sidebar created new page:', page1Info.sidebarCreatedNewPage);
+    
+    // Render Page 2, passing page1Info for sidebar coordination
+    renderPage2(doc, data, page1Info);
 
     // Finalize PDF
     doc.end();

@@ -45,6 +45,9 @@ const sampleData = {
     "Enterprising",
     "Realistic",
     "Artistic",
+    "Enterprising",
+    "Realistic",
+    "Artistic",
   ],
   whyChooseReasons: [
     "Strongest academic and psychometric fit: High aptitude in numerical, reasoning, and verbal; top interest in mathematics and analytical subjects.",

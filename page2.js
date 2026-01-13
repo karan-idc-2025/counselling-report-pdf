@@ -16,85 +16,127 @@ const PAGE2_COLORS = {
 
 /**
  * Render Page 2 of the Career Recommendation Report
+ * @param {Object} doc - PDFKit document
+ * @param {Object} data - Page 2 data
+ * @param {Object} page1Info - Information from page 1 about sidebar overflow
  */
-function renderPage2(doc, data) {
+function renderPage2(doc, data, page1Info = {}) {
     const helpers = createHelpers(doc);
     const { drawRoundedRect, drawBulletList, drawLabelBadge, drawText } = helpers;
-
-    // Start new page
-    doc.addPage();
+    
+    const hasSidebarOnPage2 = page1Info.sidebarCreatedNewPage || false;
+    const sidebarFinalY = page1Info.sidebarFinalY || PAGE.margin;
+    
+    // If sidebar created a new page, switch to that page to draw content next to it
+    if (hasSidebarOnPage2 && page1Info.sidebarOverflowPage) {
+        // Switch to the sidebar overflow page
+        doc.page = page1Info.sidebarOverflowPage;
+    } else {
+        // Add a new page for page 2 content
+        doc.addPage();
+    }
+    
+    // Calculate layout based on sidebar presence
+    const sidebarWidth = page1Info.sidebarWidth || 160;
+    const sidebarGap = 15;
+    
+    // Initial content margin (next to sidebar)
+    let contentMarginLeft = hasSidebarOnPage2 ? (PAGE.margin + sidebarWidth + sidebarGap) : PAGE.margin;
+    let contentWidth = hasSidebarOnPage2 ? (PAGE.usableWidth - sidebarWidth - sidebarGap) : PAGE.usableWidth;
+    
+    // Track when we pass the sidebar's end so we can use full width
+    const sidebarEndsAtY = hasSidebarOnPage2 ? sidebarFinalY : 0;
 
     let yPos = PAGE.margin;
+    
+    // Helper to check if we're past the sidebar and should use full width
+    function getContentLayout(currentY) {
+        if (hasSidebarOnPage2 && currentY >= sidebarEndsAtY) {
+            return {
+                marginLeft: PAGE.margin,
+                width: PAGE.usableWidth
+            };
+        }
+        return {
+            marginLeft: contentMarginLeft,
+            width: contentWidth
+        };
+    }
 
     // ========== HEADER SECTION ==========
+    // Get layout for current position
+    let layout = getContentLayout(yPos);
+    
     // Draw target icon (circle with dot)
     doc.save();
     doc.strokeColor(PAGE2_COLORS.primaryPurple).lineWidth(2);
-    doc.circle(PAGE.margin + 8, yPos + 8, 7).stroke();
+    doc.circle(layout.marginLeft + 8, yPos + 8, 7).stroke();
     doc.fillColor(PAGE2_COLORS.primaryPurple);
-    doc.circle(PAGE.margin + 8, yPos + 8, 3).fill();
+    doc.circle(layout.marginLeft + 8, yPos + 8, 3).fill();
     doc.restore();
     
     doc.fillColor(COLORS.black).fontSize(16).font('Helvetica-Bold')
-        .text('Career Cluster Recommendations', PAGE.margin + 22, yPos);
+        .text('Career Cluster Recommendations', layout.marginLeft + 22, yPos);
 
     yPos += 30;
+    layout = getContentLayout(yPos);
 
     // ========== PRIMARY CAREER RECOMMENDATION PILL ==========
     const pillHeight = 26;
-    drawRoundedRect(PAGE.margin, yPos, PAGE.usableWidth, pillHeight, 15, PAGE2_COLORS.primaryPurple);
+    drawRoundedRect(layout.marginLeft, yPos, layout.width, pillHeight, 15, PAGE2_COLORS.primaryPurple);
     
     doc.fillColor(PAGE2_COLORS.white).fontSize(11).font('Helvetica-Bold');
     const primaryText = 'Primary Career Recommendation';
     const primaryTextWidth = doc.widthOfString(primaryText);
-    const primaryTextX = PAGE.margin + (PAGE.usableWidth - primaryTextWidth) / 2;
+    const primaryTextX = layout.marginLeft + (layout.width - primaryTextWidth) / 2;
     doc.text(primaryText, primaryTextX, yPos + 7);
 
     yPos += pillHeight + 15;
+    layout = getContentLayout(yPos);
 
     // ========== TWO CAREER CLUSTER CARDS (SIDE BY SIDE) ==========
     const cardGap = 15;
-    const cardWidth = (PAGE.usableWidth - cardGap) / 2;
+    const cardWidth = (layout.width - cardGap) / 2;
     const cardRadius = 12;
 
     // Helper function to draw a career cluster card
     function drawClusterCard(cluster, x, y, width) {
-        const cardHeight = calculateCardHeight(cluster);
+        const cardHeight = calculateCardHeight(cluster, width);
         
         // Card background
         drawRoundedRect(x, y, width, cardHeight, cardRadius, PAGE2_COLORS.lightGrayCard);
 
         let contentY = y + 12;
-        const contentX = x + 12;
-        const contentWidth = width - 24;
+        const cardContentX = x + 12;
+        const cardContentWidth = width - 24;
 
         // Icon + Title (using colored circle instead of emoji)
         doc.save();
         doc.fillColor(PAGE2_COLORS.primaryPurple);
-        doc.circle(contentX + 6, contentY + 5, 6).fill();
+        doc.circle(cardContentX + 6, contentY + 5, 6).fill();
         doc.restore();
         
         doc.fillColor(PAGE2_COLORS.darkGrayText).fontSize(12).font('Helvetica-Bold')
-            .text(cluster.name, contentX + 18, contentY);
+            .text(cluster.name, cardContentX + 18, contentY);
 
         contentY += 20;
 
         // Divider line
         doc.strokeColor('#E5E7EB').lineWidth(0.5)
-            .moveTo(contentX, contentY).lineTo(x + width - 12, contentY).stroke();
+            .moveTo(cardContentX, contentY).lineTo(x + width - 12, contentY).stroke();
 
         contentY += 8;
 
         // "Why this Cluster?" section
         doc.fillColor(COLORS.black).fontSize(8).font('Helvetica-Bold')
-            .text('Why this Cluster?', contentX, contentY);
+            .text('Why this Cluster?', cardContentX, contentY);
         contentY += 12;
 
         // Bullet points for why
         doc.fillColor(PAGE2_COLORS.mediumGrayText).fontSize(7).font('Helvetica');
         cluster.whyReasons.forEach(reason => {
-            const textHeight = doc.heightOfString(`• ${reason}`, { width: contentWidth - 10 });
-            doc.text(`• ${reason}`, contentX, contentY, { width: contentWidth - 10 });
+            const textHeight = doc.heightOfString(`• ${reason}`, { width: cardContentWidth - 10 });
+            doc.text(`• ${reason}`, cardContentX, contentY, { width: cardContentWidth - 10 });
             contentY += textHeight + 2;
         });
 
@@ -102,12 +144,12 @@ function renderPage2(doc, data) {
 
         // "Subject Combination Eligibility:" section
         doc.fillColor(COLORS.black).fontSize(8).font('Helvetica-Bold')
-            .text('Subject Combination Eligibility:', contentX, contentY);
+            .text('Subject Combination Eligibility:', cardContentX, contentY);
         contentY += 12;
 
         doc.fillColor(PAGE2_COLORS.mediumGrayText).fontSize(7).font('Helvetica');
         cluster.subjectEligibility.forEach(subject => {
-            doc.text(`• ${subject}`, contentX, contentY);
+            doc.text(`• ${subject}`, cardContentX, contentY);
             contentY += 10;
         });
 
@@ -115,12 +157,12 @@ function renderPage2(doc, data) {
 
         // "Top Careers:" section
         doc.fillColor(COLORS.black).fontSize(8).font('Helvetica-Bold')
-            .text('Top Careers:', contentX, contentY);
+            .text('Top Careers:', cardContentX, contentY);
         contentY += 12;
 
         doc.fillColor(PAGE2_COLORS.cyanLink).fontSize(7).font('Helvetica');
         cluster.topCareers.forEach(career => {
-            doc.text(`• ${career}`, contentX, contentY, { link: null, underline: true });
+            doc.text(`• ${career}`, cardContentX, contentY, { link: null, underline: true });
             contentY += 10;
         });
 
@@ -128,7 +170,7 @@ function renderPage2(doc, data) {
     }
 
     // Helper to calculate card height
-    function calculateCardHeight(cluster) {
+    function calculateCardHeight(cluster, width) {
         let height = 12; // Top padding
         height += 20; // Title
         height += 8; // Divider
@@ -136,7 +178,7 @@ function renderPage2(doc, data) {
         
         doc.fontSize(7).font('Helvetica');
         cluster.whyReasons.forEach(reason => {
-            height += doc.heightOfString(`• ${reason}`, { width: cardWidth - 34 }) + 2;
+            height += doc.heightOfString(`• ${reason}`, { width: width - 34 }) + 2;
         });
         
         height += 5 + 12; // Gap + "Subject Combination Eligibility:" title
@@ -153,46 +195,48 @@ function renderPage2(doc, data) {
     let maxCardHeight = 0;
 
     if (primaryClusters.length >= 1) {
-        const height1 = drawClusterCard(primaryClusters[0], PAGE.margin, yPos, cardWidth);
+        const height1 = drawClusterCard(primaryClusters[0], layout.marginLeft, yPos, cardWidth);
         maxCardHeight = Math.max(maxCardHeight, height1);
     }
 
     if (primaryClusters.length >= 2) {
-        const height2 = drawClusterCard(primaryClusters[1], PAGE.margin + cardWidth + cardGap, yPos, cardWidth);
+        const height2 = drawClusterCard(primaryClusters[1], layout.marginLeft + cardWidth + cardGap, yPos, cardWidth);
         maxCardHeight = Math.max(maxCardHeight, height2);
     }
 
     yPos += maxCardHeight + 15;
+    layout = getContentLayout(yPos);
 
     // ========== BACKUP CAREER OPTION PILL ==========
-    drawRoundedRect(PAGE.margin, yPos, PAGE.usableWidth, pillHeight, 15, PAGE2_COLORS.primaryPurple);
+    drawRoundedRect(layout.marginLeft, yPos, layout.width, pillHeight, 15, PAGE2_COLORS.primaryPurple);
     
     doc.fillColor(PAGE2_COLORS.white).fontSize(11).font('Helvetica-Bold');
     const backupText = 'Backup Career Option';
     const backupTextWidth = doc.widthOfString(backupText);
-    const backupTextX = PAGE.margin + (PAGE.usableWidth - backupTextWidth) / 2;
+    const backupTextX = layout.marginLeft + (layout.width - backupTextWidth) / 2;
     doc.text(backupText, backupTextX, yPos + 7);
 
     yPos += pillHeight + 15;
+    layout = getContentLayout(yPos);
 
     // ========== BACKUP CAREER CLUSTER SECTION ==========
     const backupCluster = data.careerClusters.backup[0];
     
     if (backupCluster) {
         // Layout: Main card (60%), Info boxes (35%), with 5% gap
-        const mainCardWidth = PAGE.usableWidth * 0.58;
-        const infoBoxWidth = PAGE.usableWidth * 0.38;
-        const layoutGap = PAGE.usableWidth * 0.04;
+        const mainCardWidth = layout.width * 0.58;
+        const infoBoxWidth = layout.width * 0.38;
+        const layoutGap = layout.width * 0.04;
 
         // Main backup card
         const backupCardHeight = 130;
-        drawRoundedRect(PAGE.margin, yPos, mainCardWidth, backupCardHeight, cardRadius, PAGE2_COLORS.lightGrayCard);
+        drawRoundedRect(layout.marginLeft, yPos, mainCardWidth, backupCardHeight, cardRadius, PAGE2_COLORS.lightGrayCard);
 
         let backupContentY = yPos + 12;
-        const backupContentX = PAGE.margin + 12;
+        const backupContentX = layout.marginLeft + 12;
         const backupContentWidth = mainCardWidth - 24;
 
-        // Icon + Title (using colored circle instead of emoji)
+        // Icon + Title
         doc.save();
         doc.fillColor(PAGE2_COLORS.primaryPurple);
         doc.circle(backupContentX + 6, backupContentY + 5, 6).fill();
@@ -205,7 +249,7 @@ function renderPage2(doc, data) {
 
         // Divider line
         doc.strokeColor('#E5E7EB').lineWidth(0.5)
-            .moveTo(backupContentX, backupContentY).lineTo(PAGE.margin + mainCardWidth - 12, backupContentY).stroke();
+            .moveTo(backupContentX, backupContentY).lineTo(layout.marginLeft + mainCardWidth - 12, backupContentY).stroke();
 
         backupContentY += 8;
 
@@ -222,7 +266,7 @@ function renderPage2(doc, data) {
         });
 
         // Right side: Info boxes
-        const infoBoxX = PAGE.margin + mainCardWidth + layoutGap;
+        const infoBoxX = layout.marginLeft + mainCardWidth + layoutGap;
         const infoBoxHeight = (backupCardHeight - 10) / 2;
 
         // Subject Combination Eligibility box
@@ -257,32 +301,35 @@ function renderPage2(doc, data) {
         });
 
         yPos += backupCardHeight + 15;
+        layout = getContentLayout(yPos);
     }
 
     // ========== CAREER ASPIRATION EVALUATION SECTION ==========
+    layout = getContentLayout(yPos);
+    
     // Draw star icon
     doc.save();
     doc.fillColor('#F59E0B');
-    const starCenterX = PAGE.margin + 8;
+    const starCenterX = layout.marginLeft + 8;
     const starCenterY = yPos + 7;
-    // Simple star shape using a filled circle
     doc.circle(starCenterX, starCenterY, 6).fill();
     doc.restore();
     
     doc.fillColor(COLORS.black).fontSize(14).font('Helvetica-Bold')
-        .text('Career Aspiration Evaluation', PAGE.margin + 22, yPos);
+        .text('Career Aspiration Evaluation', layout.marginLeft + 22, yPos);
 
     yPos += 22;
+    layout = getContentLayout(yPos);
 
     // Aspiration evaluation box
     const aspirationData = data.careerAspirationEvaluation;
-    const aspirationBoxHeight = calculateAspirationBoxHeight(aspirationData);
+    const aspirationBoxHeight = calculateAspirationBoxHeight(aspirationData, layout.width);
 
-    drawRoundedRect(PAGE.margin, yPos, PAGE.usableWidth, aspirationBoxHeight, 12, PAGE2_COLORS.lightPurpleBackground);
+    drawRoundedRect(layout.marginLeft, yPos, layout.width, aspirationBoxHeight, 12, PAGE2_COLORS.lightPurpleBackground);
 
     let aspContentY = yPos + 12;
-    const aspContentX = PAGE.margin + 15;
-    const aspContentWidth = PAGE.usableWidth - 30;
+    const aspContentX = layout.marginLeft + 15;
+    const aspContentWidth = layout.width - 30;
 
     // Aspirational Career
     doc.fillColor(COLORS.black).fontSize(8).font('Helvetica-Bold')
@@ -333,9 +380,7 @@ function renderPage2(doc, data) {
         });
     }
 
-
-  
-    yPos += aspirationBoxHeight + 40; // Increased from 20 to 40 for more spacing
+    yPos += aspirationBoxHeight + 40;
 
     // ========== FOOTER SECTION ==========
     const footerHeight = 70;
@@ -346,43 +391,52 @@ function renderPage2(doc, data) {
         yPos = PAGE.margin;
     }
     
-    const footerY = yPos; // Use dynamic position instead of fixed bottom position
+    // Footer always uses full width (it's at the bottom, past any sidebar)
+    const footerLayout = {
+        marginLeft: PAGE.margin,
+        width: PAGE.usableWidth
+    };
+    
+    const footerY = yPos;
 
-    // Purple footer box
-    drawRoundedRect(PAGE.margin, footerY, PAGE.usableWidth, footerHeight, 15, PAGE2_COLORS.primaryPurple);
+    // Footer uses full page width
+    drawRoundedRect(footerLayout.marginLeft, footerY, footerLayout.width, footerHeight, 15, PAGE2_COLORS.primaryPurple);
 
     // Best wishes text
     doc.fillColor(PAGE2_COLORS.white).fontSize(12).font('Helvetica-Bold');
     const wishesText = 'Best wishes for your journey ahead!';
     const wishesWidth = doc.widthOfString(wishesText);
-    doc.text(wishesText, PAGE.margin + (PAGE.usableWidth - wishesWidth) / 2, footerY + 15);
+    const wishesX = footerLayout.marginLeft + (footerLayout.width - wishesWidth) / 2;
+    doc.text(wishesText, wishesX, footerY + 15);
 
     // Subtext
     doc.fontSize(9).font('Helvetica');
     const subtextText = 'If you need further guidance, speak with your school counselor or connect with professionals in your chosen fields.';
-    doc.text(subtextText, PAGE.margin + 20, footerY + 35, { 
-        width: PAGE.usableWidth - 40, 
+    const subtextX = footerLayout.marginLeft + 20;
+    doc.text(subtextText, subtextX, footerY + 35, { 
+        width: footerLayout.width - 40, 
         align: 'center' 
     });
 
-    // Copyright
+    // Copyright - also positioned within content area
     doc.fillColor(PAGE2_COLORS.mediumGrayText).fontSize(7).font('Helvetica');
     const copyrightText = 'Copyright © Medhavi Professional Services Pvt. Ltd. All Rights Reserved';
     const copyrightWidth = doc.widthOfString(copyrightText);
-    doc.text(copyrightText, PAGE.margin + (PAGE.usableWidth - copyrightWidth) / 2, footerY + footerHeight + 8);
+    const copyrightX = footerLayout.marginLeft + (footerLayout.width - copyrightWidth) / 2;
+    doc.text(copyrightText, copyrightX, footerY + footerHeight + 8);
 
     // Helper function to calculate aspiration box height
-    function calculateAspirationBoxHeight(aspData) {
+    function calculateAspirationBoxHeight(aspData, availableWidth) {
         let height = 24; // Top and bottom padding
         height += 14; // Aspirational Career line
         
         doc.fontSize(8).font('Helvetica');
-        height += doc.heightOfString(aspData.clusterAnalysis, { width: PAGE.usableWidth - 120 }) + 10;
+        height += doc.heightOfString(aspData.clusterAnalysis, { width: availableWidth - 120 }) + 10;
         
         height += 12; // Evaluation title
         doc.fontSize(7).font('Helvetica');
         aspData.evaluation.forEach(item => {
-            height += doc.heightOfString(`• ${item}`, { width: PAGE.usableWidth - 40 }) + 2;
+            height += doc.heightOfString(`• ${item}`, { width: availableWidth - 40 }) + 2;
         });
         
         height += 6 + 14; // Gap + Verdict line
@@ -390,7 +444,7 @@ function renderPage2(doc, data) {
         if (aspData.suggestions && aspData.suggestions.length > 0) {
             height += 12; // Suggestions title
             aspData.suggestions.forEach(item => {
-                height += doc.heightOfString(`• ${item}`, { width: PAGE.usableWidth - 40 }) + 2;
+                height += doc.heightOfString(`• ${item}`, { width: availableWidth - 40 }) + 2;
             });
         }
         
@@ -401,4 +455,3 @@ function renderPage2(doc, data) {
 }
 
 module.exports = { renderPage2 };
-
