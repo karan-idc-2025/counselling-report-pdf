@@ -72,7 +72,7 @@ function renderPage1(doc, data) {
     const pillX = (PAGE.width - pillWidth) / 2;
     const pillY = yPos;
     
-    drawRoundedRect(pillX, pillY, pillWidth, 26, 13, COLORS.white, COLORS.gray);
+    drawRoundedRect(pillX, pillY, pillWidth, 26, 13, COLORS.white, COLORS.black);
     doc.fillColor(COLORS.black).fontSize(10).font('Helvetica').text(pillText, pillX + 20, pillY + 7);
 
     // Two columns inside purple card
@@ -226,7 +226,7 @@ function renderPage1(doc, data) {
     boxContentY += 12;
     boxContentY = drawBulletList(data.clusterSetAccess, mainContentX + 10, boxContentY, mainContentWidth - 20, { fontSize: 7 });
 
-    doc.fillColor(COLORS.gray).fontSize(7).font('Helvetica')
+    doc.fillColor(COLORS.black).fontSize(7).font('Helvetica')
         .text('These sets match your highest fitment scores and maximize your career options in line with your profile.', mainContentX + 10, boxContentY, { width: mainContentWidth - 20 });
 
     mainY = mainY + whyChooseBoxHeight + 10;
@@ -263,7 +263,7 @@ function renderPage1(doc, data) {
     doc.fillColor(COLORS.black).fontSize(8).font('Helvetica-Bold')
         .text('Final Verdict: ', mainContentX + 10, aspY);
     aspY += 10;
-    doc.fillColor(COLORS.gray).fontSize(7).font('Helvetica')
+    doc.fillColor(COLORS.black).fontSize(7).font('Helvetica')
         .text(data.finalVerdict, mainContentX + 10, aspY, { width: mainContentWidth - 20 });
 
     // Track page count BEFORE drawing sidebar
@@ -339,7 +339,7 @@ function renderPage1(doc, data) {
         const availableWidth = sidebarContentWidth - 20;
         const fullText = `${label}- ${value}`;
         
-        doc.fillColor(COLORS.gray).fontSize(6.5).font('Helvetica')
+        doc.fillColor(COLORS.black).fontSize(6.5).font('Helvetica')
             .text(fullText, x + 14, y, { width: availableWidth });
         
         const textHeight = doc.heightOfString(fullText, { width: availableWidth });
@@ -348,7 +348,7 @@ function renderPage1(doc, data) {
 
     // Sidebar bullet list with page breaks
     function drawSidebarBulletList(items, x, y, maxWidth, options = {}) {
-        const { fontSize = 7, lineGap = 8, color = COLORS.gray } = options;
+        const { fontSize = 7, lineGap = 8, color = COLORS.black } = options;
         let currentY = y;
         
         doc.fillColor(color).fontSize(fontSize).font('Helvetica');
@@ -426,21 +426,21 @@ function renderPage1(doc, data) {
     sidebarY = checkSidebarPageBreak(sidebarY, boxHeight + 10);
 
     drawRoundedRect(classBoxX, sidebarY, boxWidth, boxHeight, 6, COLORS.white, COLORS.lightGray);
-    doc.fillColor(COLORS.gray).fontSize(7).font('Helvetica')
+    doc.fillColor(COLORS.black).fontSize(7).font('Helvetica')
         .text('Class', classBoxX + 8, sidebarY + 6);
     doc.fillColor(COLORS.black).fontSize(8).font('Helvetica-Bold')
         .text(data.class, classBoxX + 8, sidebarY + 20);
 
     if (showStream) {
         drawRoundedRect(streamBoxX, sidebarY, boxWidth, boxHeight, 6, COLORS.white, COLORS.lightGray);
-        doc.fillColor(COLORS.gray).fontSize(7).font('Helvetica')
+        doc.fillColor(COLORS.black).fontSize(7).font('Helvetica')
             .text('Stream', streamBoxX + 8, sidebarY + 6);
         doc.fillColor(COLORS.black).fontSize(11).font('Helvetica-Bold')
             .text(data.stream, streamBoxX + 8, sidebarY + 20, { width: boxWidth - 16, ellipsis: true });
     }
 
     drawRoundedRect(schoolBoxX, sidebarY, boxWidth, boxHeight, 6, COLORS.white, COLORS.lightGray);
-    doc.fillColor(COLORS.gray).fontSize(7).font('Helvetica')
+    doc.fillColor(COLORS.black).fontSize(7).font('Helvetica')
         .text('School', schoolBoxX + 8, sidebarY + 6);
     doc.fillColor(COLORS.black).fontSize(7).font('Helvetica-Bold')
         .text(data.school, schoolBoxX + 8, sidebarY + 20, { width: boxWidth - 16, ellipsis: true });

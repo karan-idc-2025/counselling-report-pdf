@@ -133,7 +133,7 @@ function renderPage2(doc, data, page1Info = {}) {
         contentY += 12;
 
         // Bullet points for why
-        doc.fillColor(PAGE2_COLORS.mediumGrayText).fontSize(7).font('Helvetica');
+        doc.fillColor(COLORS.black).fontSize(7).font('Helvetica');
         cluster.whyReasons.forEach(reason => {
             const textHeight = doc.heightOfString(`• ${reason}`, { width: cardContentWidth - 10 });
             doc.text(`• ${reason}`, cardContentX, contentY, { width: cardContentWidth - 10 });
@@ -147,7 +147,7 @@ function renderPage2(doc, data, page1Info = {}) {
             .text('Subject Combination Eligibility:', cardContentX, contentY);
         contentY += 12;
 
-        doc.fillColor(PAGE2_COLORS.mediumGrayText).fontSize(7).font('Helvetica');
+        doc.fillColor(COLORS.black).fontSize(7).font('Helvetica');
         cluster.subjectEligibility.forEach(subject => {
             doc.text(`• ${subject}`, cardContentX, contentY);
             contentY += 10;
@@ -258,7 +258,7 @@ function renderPage2(doc, data, page1Info = {}) {
             .text('Why this Cluster?', backupContentX, backupContentY);
         backupContentY += 12;
 
-        doc.fillColor(PAGE2_COLORS.mediumGrayText).fontSize(7).font('Helvetica');
+        doc.fillColor(COLORS.black).fontSize(7).font('Helvetica');
         backupCluster.whyReasons.forEach(reason => {
             const textHeight = doc.heightOfString(`• ${reason}`, { width: backupContentWidth - 10 });
             doc.text(`• ${reason}`, backupContentX, backupContentY, { width: backupContentWidth - 10 });
@@ -279,7 +279,7 @@ function renderPage2(doc, data, page1Info = {}) {
         doc.text('Eligibility:', infoBoxX + 10, infoBoxY);
         infoBoxY += 14;
 
-        doc.fillColor(PAGE2_COLORS.mediumGrayText).fontSize(7).font('Helvetica');
+        doc.fillColor(COLORS.black).fontSize(7).font('Helvetica');
         backupCluster.subjectEligibility.forEach(subject => {
             doc.text(`• ${subject}`, infoBoxX + 10, infoBoxY);
             infoBoxY += 10;
@@ -331,14 +331,14 @@ function renderPage2(doc, data, page1Info = {}) {
     // Aspirational Career
     doc.fillColor(COLORS.black).fontSize(8).font('Helvetica-Bold')
         .text('Aspirational Career: ', aspContentX, aspContentY, { continued: true });
-    doc.fillColor(PAGE2_COLORS.mediumGrayText).font('Helvetica')
+    doc.fillColor(COLORS.black).font('Helvetica')
         .text(aspirationData.aspirationalCareer);
     aspContentY += 14;
 
     // Cluster Analysis
     doc.fillColor(COLORS.black).fontSize(8).font('Helvetica-Bold')
         .text('Cluster Analysis: ', aspContentX, aspContentY, { continued: true });
-    doc.fillColor(PAGE2_COLORS.mediumGrayText).font('Helvetica')
+    doc.fillColor(COLORS.black).font('Helvetica')
         .text(aspirationData.clusterAnalysis, { width: aspContentWidth - 90 });
     aspContentY += doc.heightOfString(aspirationData.clusterAnalysis, { width: aspContentWidth - 90 }) + 10;
 
@@ -347,7 +347,7 @@ function renderPage2(doc, data, page1Info = {}) {
         .text('Evaluation:', aspContentX, aspContentY);
     aspContentY += 12;
 
-    doc.fillColor(PAGE2_COLORS.mediumGrayText).fontSize(7).font('Helvetica');
+    doc.fillColor(COLORS.black).fontSize(7).font('Helvetica');
     aspirationData.evaluation.forEach(item => {
         const textHeight = doc.heightOfString(`• ${item}`, { width: aspContentWidth - 10 });
         doc.text(`• ${item}`, aspContentX, aspContentY, { width: aspContentWidth - 10 });
@@ -359,7 +359,7 @@ function renderPage2(doc, data, page1Info = {}) {
     // Verdict
     doc.fillColor(COLORS.black).fontSize(8).font('Helvetica-Bold')
         .text('Verdict: ', aspContentX, aspContentY, { continued: true });
-    doc.fillColor(PAGE2_COLORS.mediumGrayText).font('Helvetica')
+    doc.fillColor(COLORS.black).font('Helvetica')
         .text(aspirationData.verdict);
     aspContentY += 14;
 
@@ -369,7 +369,7 @@ function renderPage2(doc, data, page1Info = {}) {
             .text('Suggestions:', aspContentX, aspContentY);
         aspContentY += 12;
 
-        doc.fillColor(PAGE2_COLORS.mediumGrayText).fontSize(7).font('Helvetica');
+        doc.fillColor(COLORS.black).fontSize(7).font('Helvetica');
         aspirationData.suggestions.forEach(item => {
             const textHeight = doc.heightOfString(`• ${item}`, { width: aspContentWidth - 10 });
             doc.text(`• ${item}`, aspContentX, aspContentY, { width: aspContentWidth - 10 });
@@ -428,7 +428,7 @@ function renderPage2(doc, data, page1Info = {}) {
 
     // Copyright - positioned just below footer with minimal spacing
     // IMPORTANT: Use lineBreak: false to prevent PDFKit from auto-adding pages
-    doc.fillColor(PAGE2_COLORS.mediumGrayText).fontSize(7).font('Helvetica');
+    doc.fillColor(COLORS.black).fontSize(7).font('Helvetica');
     const copyrightText = 'Copyright © Medhavi Professional Services Pvt. Ltd. All Rights Reserved';
     const copyrightWidth = doc.widthOfString(copyrightText);
     const copyrightX = footerLayout.marginLeft + (footerLayout.width - copyrightWidth) / 2;

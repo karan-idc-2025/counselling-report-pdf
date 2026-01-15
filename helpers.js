@@ -33,7 +33,7 @@ function createHelpers(doc) {
     }
 
     function drawBulletList(items, x, y, maxWidth, options = {}) {
-        const { fontSize = 7, lineGap = 8, color = COLORS.gray } = options;
+        const { fontSize = 7, lineGap = 8, color = COLORS.black } = options;
         let currentY = y;
         
         doc.fillColor(color).fontSize(fontSize).font('Helvetica');
@@ -77,7 +77,7 @@ function createHelpers(doc) {
     function drawText(text, x, y, width, options = {}) {
         const {
             fontSize = 10,
-            color = COLORS.gray,
+            color = COLORS.black,
             font = 'Helvetica',
             align = 'left',
             lineGap = 2
