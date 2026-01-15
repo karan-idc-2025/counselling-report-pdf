@@ -308,11 +308,8 @@ function renderPage2(doc, data, page1Info = {}) {
     layout = getContentLayout(yPos);
     
     // Draw star icon
-    doc.save();
-    doc.fillColor('#F59E0B');
-    const starCenterX = layout.marginLeft + 8;
-    const starCenterY = yPos + 7;
-    doc.circle(starCenterX, starCenterY, 6).fill();
+    doc.save()
+    doc.image(path.join(__dirname, 'images', 'star.png'), layout.marginLeft + 5 , yPos-2, { width: 18, height: 18 });
     doc.restore();
     
     doc.fillColor(COLORS.black).fontSize(14).font('Helvetica-Bold')
@@ -380,13 +377,23 @@ function renderPage2(doc, data, page1Info = {}) {
         });
     }
 
-    yPos += aspirationBoxHeight + 40;
+    // Add minimal spacing before footer to maximize space
+    yPos += aspirationBoxHeight + 15;
 
     // ========== FOOTER SECTION ==========
     const footerHeight = 70;
+    const copyrightHeight = 8; // Height for copyright line
+    const footerSpacing = 8; // Space between footer and copyright
     
-    // Check if we need to add a new page for footer
-    if (yPos + footerHeight + 40 > PAGE.height - PAGE.margin) {
+    // Calculate minimum space needed for footer (just footer + copyright)
+    const minFooterSpace = footerHeight + footerSpacing + copyrightHeight;
+    
+    // Check if footer fits on current page - use FULL page height
+    const pageBottom = PAGE.height;
+    const availableSpace = pageBottom - yPos;
+    
+    // Only create new page if footer truly won't fit
+    if (availableSpace < minFooterSpace) {
         doc.addPage();
         yPos = PAGE.margin;
     }
@@ -409,21 +416,24 @@ function renderPage2(doc, data, page1Info = {}) {
     const wishesX = footerLayout.marginLeft + (footerLayout.width - wishesWidth) / 2;
     doc.text(wishesText, wishesX, footerY + 15);
 
-    // Subtext
+    // Subtext - use lineBreak: false to prevent auto page breaks
     doc.fontSize(9).font('Helvetica');
     const subtextText = 'If you need further guidance, speak with your school counselor or connect with professionals in your chosen fields.';
     const subtextX = footerLayout.marginLeft + 20;
     doc.text(subtextText, subtextX, footerY + 35, { 
         width: footerLayout.width - 40, 
-        align: 'center' 
+        align: 'center',
+        lineBreak: false
     });
 
-    // Copyright - also positioned within content area
+    // Copyright - positioned just below footer with minimal spacing
+    // IMPORTANT: Use lineBreak: false to prevent PDFKit from auto-adding pages
     doc.fillColor(PAGE2_COLORS.mediumGrayText).fontSize(7).font('Helvetica');
     const copyrightText = 'Copyright © Medhavi Professional Services Pvt. Ltd. All Rights Reserved';
     const copyrightWidth = doc.widthOfString(copyrightText);
     const copyrightX = footerLayout.marginLeft + (footerLayout.width - copyrightWidth) / 2;
-    doc.text(copyrightText, copyrightX, footerY + footerHeight + 8);
+    const copyrightY = footerY + footerHeight + 3; // Reduced spacing from 8 to 3
+    doc.text(copyrightText, copyrightX, copyrightY, { lineBreak: false });
 
     // Helper function to calculate aspiration box height
     function calculateAspirationBoxHeight(aspData, availableWidth) {
