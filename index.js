@@ -1,5 +1,6 @@
 const PDFDocument = require('pdfkit');
 const fs = require('fs');
+const path = require('path');
 const { PAGE } = require('./constants');
 const { renderPage1 } = require('./page1');
 const { renderPage2 } = require('./page2');
@@ -19,6 +20,29 @@ function generateCareerReportPDF(data, outputPath = 'recommendation-report.pdf')
     });
 
     doc.pipe(fs.createWriteStream(outputPath));
+
+    // Add background image to all pages
+    const bgImagePath = path.join(__dirname, 'images', 'bg.jpeg');
+    
+    // Helper function to draw background on current page
+    function drawBackground() {
+        if (fs.existsSync(bgImagePath)) {
+            // Draw background at (0, 0) to cover entire page, ignoring margins
+            doc.image(bgImagePath, 0, 0, { 
+                width: PAGE.width, 
+                height: PAGE.height
+            });
+        }
+    }
+    
+    // Draw background on the first page (auto-created)
+    drawBackground();
+    
+    // Listen for new pages and add background to each
+    // This event fires when a new page is added, before any content is drawn
+    doc.on('pageAdded', () => {
+        drawBackground();
+    });
 
     // Render Page 1 and get page info
     const page1Info = renderPage1(doc, data);

@@ -143,10 +143,10 @@ function renderPage1(doc, data) {
         .text(linkText, linkX, linkY);
     
     const underlineY = linkY + 11;
-    doc.strokeColor(COLORS.white).lineWidth(0.5)
+    doc.strokeColor(COLORS.white).lineWidth(0.2)
         .moveTo(linkX, underlineY).lineTo(linkX + linkWidth, underlineY).stroke();
     
-    doc.strokeColor(COLORS.white).lineWidth(0.5)
+    doc.strokeColor(COLORS.white).lineWidth(0.2)
         .moveTo(leftColX, bottomLineY).lineTo(linkX - 15, bottomLineY).stroke();
     
     doc.moveTo(linkX + linkWidth + 15, bottomLineY).lineTo(PAGE.margin + PAGE.usableWidth - 25, bottomLineY).stroke();
