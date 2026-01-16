@@ -14,15 +14,17 @@ function renderPage1(doc, data) {
 
     // ========== HEADER ==========
     
-    // Logo: IDC ONE (using image)
+    // Logo: IDC ONE (using image) - preserve aspect ratio
     const logoImagePath = path.join(__dirname, 'images', 'idcOne.png');
-    const logoHeight = 17;
     const centerX = PAGE.width / 2;
     
     if (fs.existsSync(logoImagePath)) {
-        const logoWidth = 50;
-        const logoX = centerX - (logoWidth / 2);
-        doc.image(logoImagePath, logoX, yPos - 10, { width: logoWidth, height: logoHeight });
+        // Use height only to preserve aspect ratio
+        const logoHeight = 16;
+        // Estimate width based on typical logo aspect ratio (approx 3:1)
+        const estimatedLogoWidth = 55;
+        const logoX = centerX - (estimatedLogoWidth / 2);
+        doc.image(logoImagePath, logoX, yPos - 5, { height: logoHeight });
     } else {
         // Fallback to text if image not found
         doc.font('Helvetica-Bold').fontSize(14);
@@ -32,7 +34,7 @@ function renderPage1(doc, data) {
         doc.fillColor(COLORS.white).fontSize(12).text('ONE', centerX - 35 + idcWidth + 12, yPos + 3);
     }
 
-    yPos += 28;
+    yPos += 30;
 
     // Main title with gradient effect
     const titleText = 'RECOMMENDATION REPORT';
@@ -57,101 +59,134 @@ function renderPage1(doc, data) {
 
     // ========== COUNSELING SUMMARY SECTION ==========
     
-    const summaryCardHeight = 130;
-    const summaryCardY = yPos + 12;
+    const summaryCardHeight = 140;
+    const summaryCardY = yPos + 14;
     
-    // Draw purple card
-    drawRoundedRect(PAGE.margin, summaryCardY, PAGE.usableWidth, summaryCardHeight, 20, '#8B5CF6');
-    drawRoundedRect(PAGE.margin + 2, summaryCardY + 2, PAGE.usableWidth - 4, summaryCardHeight - 4, 18, COLORS.purple);
+    // Draw purple card with gradient effect (outer lighter, inner darker)
+    drawRoundedRect(PAGE.margin, summaryCardY, PAGE.usableWidth, summaryCardHeight, 20, '#9333EA');
+    drawRoundedRect(PAGE.margin + 3, summaryCardY + 3, PAGE.usableWidth - 6, summaryCardHeight - 6, 17, '#7C3AED');
 
-    // Centered pill ABOVE card (overlapping)
+    // Centered pill ABOVE card (overlapping) - white bg, purple text
     const pillText = 'Counseling Recommendation Summary';
-    doc.font('Helvetica').fontSize(10);
+    doc.font('Helvetica-Bold').fontSize(10);
     const pillTextWidth = doc.widthOfString(pillText);
-    const pillWidth = pillTextWidth + 40;
+    const pillWidth = pillTextWidth + 50;
     const pillX = (PAGE.width - pillWidth) / 2;
     const pillY = yPos;
     
-    drawRoundedRect(pillX, pillY, pillWidth, 26, 13, COLORS.white, COLORS.black);
-    doc.fillColor(COLORS.black).fontSize(10).font('Helvetica').text(pillText, pillX + 20, pillY + 7);
+    drawRoundedRect(pillX, pillY, pillWidth, 28, 14, COLORS.white, COLORS.purple);
+    doc.fillColor(COLORS.purple).fontSize(10).font('Helvetica-Bold').text(pillText, pillX + 25, pillY + 8);
 
     // Two columns inside purple card
-    const leftColX = PAGE.margin + 25;
-    const rightColX = PAGE.margin + PAGE.usableWidth / 2 + 20;
-    let cardY = summaryCardY + 25;
+    const leftColX = PAGE.margin + 30;
+    const rightColX = PAGE.margin + (PAGE.usableWidth / 2) + 10;
+    let cardY = summaryCardY + 30;
 
     // LEFT COLUMN: Subject Combination
-    doc.fillColor(COLORS.white).fontSize(11).font('Helvetica-Bold')
+    doc.fillColor(COLORS.white).fontSize(12).font('Helvetica-Bold')
         .text('Recommended Subject Combination', leftColX, cardY);
     
-    cardY += 18;
-    doc.strokeColor(COLORS.white).lineWidth(0.5)
-        .moveTo(leftColX, cardY).lineTo(leftColX + 210, cardY).stroke();
+    cardY += 16;
+    doc.strokeColor('#FFFFFF').lineWidth(0.5).opacity(0.6)
+        .moveTo(leftColX, cardY).lineTo(leftColX + 220, cardY).stroke();
+    doc.opacity(1);
     
-    cardY += 12;
-    doc.fillColor(COLORS.white).fontSize(13).font('Helvetica-Bold')
+    cardY += 14;
+    doc.fillColor(COLORS.white).fontSize(11).font('Helvetica-Bold')
         .text(data.recommendedSubjectCombination.code, leftColX, cardY);
     
-    cardY += 20;
-    doc.fillColor(COLORS.white).fontSize(9).font('Helvetica')
-        .text(`• ${data.recommendedSubjectCombination.subjects.join(', ')}`, leftColX, cardY);
+    cardY += 18;
+    doc.fillColor(COLORS.white).fontSize(9).font('Helvetica');
+    data.recommendedSubjectCombination.subjects.forEach((subject, index) => {
+        if (index === 0) {
+            doc.text(`• ${data.recommendedSubjectCombination.subjects.join(', ')}`, leftColX + 5, cardY, { width: 200 });
+        }
+    });
 
     // RIGHT COLUMN: Career Clusters
-    cardY = summaryCardY + 25;
+    cardY = summaryCardY + 30;
     
-    doc.fillColor(COLORS.white).fontSize(11).font('Helvetica-Bold')
+    doc.fillColor(COLORS.white).fontSize(12).font('Helvetica-Bold')
         .text('Recommended Career Cluster', rightColX, cardY);
     
-    cardY += 18;
-    doc.strokeColor(COLORS.white).lineWidth(0.5)
-        .moveTo(rightColX, cardY).lineTo(rightColX + 220, cardY).stroke();
+    cardY += 16;
+    doc.strokeColor('#FFFFFF').lineWidth(0.5).opacity(0.6)
+        .moveTo(rightColX, cardY).lineTo(rightColX + 235, cardY).stroke();
+    doc.opacity(1);
     
-    cardY += 12;
+    cardY += 14;
     
     const primaryColX = rightColX;
-    const backupColX = rightColX + 140;
+    const backupColX = rightColX + 150;
     
-    doc.fillColor(COLORS.white).fontSize(9).font('Helvetica-Bold')
+    doc.fillColor(COLORS.white).fontSize(10).font('Helvetica-Bold')
         .text('Primary', primaryColX, cardY);
     doc.text('Backup', backupColX, cardY);
     
-    cardY += 15;
+    cardY += 16;
     doc.fillColor(COLORS.white).fontSize(8).font('Helvetica');
     
     let primaryY = cardY;
     data.recommendedCareerClusters.primary.forEach(cluster => {
-        doc.text(`• ${cluster}`, primaryColX, primaryY, { width: 130 });
-        primaryY += 12;
+        doc.text(`• ${cluster}`, primaryColX + 5, primaryY, { width: 135 });
+        primaryY += 13;
     });
     
     let backupY = cardY;
     data.recommendedCareerClusters.backup.forEach(cluster => {
-        doc.text(`• ${cluster}`, backupColX, backupY, { width: 110 });
-        backupY += 12;
+        doc.text(`• ${cluster}`, backupColX + 5, backupY, { width: 115 });
+        backupY += 13;
     });
 
-    // Bottom section with dashboard link
-    const bottomLineY = summaryCardY + summaryCardHeight - 25;
+    // Bottom section with dashboard link - white text with underline and gradient lines
+    const bottomSectionY = summaryCardY + summaryCardHeight - 22;
     
     const linkText = 'Explore all this on your dashboard';
     doc.font('Helvetica').fontSize(9);
     const linkWidth = doc.widthOfString(linkText);
     const linkX = (PAGE.width - linkWidth) / 2;
-    const linkY = bottomLineY - 8;
+    const linkY = bottomSectionY - 3;
     
+    // White colored text for "Explore all this on your dashboard"
     doc.fillColor(COLORS.white).fontSize(9).font('Helvetica')
         .text(linkText, linkX, linkY);
     
+    // Underline for the explore text - same style as other lines
     const underlineY = linkY + 11;
-    doc.strokeColor(COLORS.white).lineWidth(0.2)
+    doc.strokeColor('#FFFFFF').lineWidth(0.5).opacity(0.6)
         .moveTo(linkX, underlineY).lineTo(linkX + linkWidth, underlineY).stroke();
+    doc.opacity(1);
     
-    doc.strokeColor(COLORS.white).lineWidth(0.2)
-        .moveTo(leftColX, bottomLineY).lineTo(linkX - 15, bottomLineY).stroke();
+    // Gradient fading lines - left side (draw multiple segments with fading opacity)
+    const leftLineStart = leftColX;
+    const leftLineEnd = linkX - 15;
+    const lineSegments = 10;
+    const leftSegmentWidth = (leftLineEnd - leftLineStart) / lineSegments;
     
-    doc.moveTo(linkX + linkWidth + 15, bottomLineY).lineTo(PAGE.margin + PAGE.usableWidth - 25, bottomLineY).stroke();
+    for (let i = 0; i < lineSegments; i++) {
+        const opacity = 0.1 + (0.5 * (i + 1) / lineSegments); // Fades from 0.1 to 0.6 (left to right)
+        doc.strokeColor('#FFFFFF').lineWidth(0.5).opacity(opacity)
+            .moveTo(leftLineStart + (i * leftSegmentWidth), bottomSectionY)
+            .lineTo(leftLineStart + ((i + 1) * leftSegmentWidth), bottomSectionY)
+            .stroke();
+    }
+    doc.opacity(1);
+    
+    // Gradient fading lines - right side (draw multiple segments with fading opacity)
+    const rightLineStart = linkX + linkWidth + 15;
+    const rightLineEnd = PAGE.margin + PAGE.usableWidth - 30;
+    const rightSegmentWidth = (rightLineEnd - rightLineStart) / lineSegments;
+    
+    for (let i = 0; i < lineSegments; i++) {
+        const opacity = 0.6 - (0.5 * i / lineSegments); // Fades from 0.6 to 0.1 (left to right)
+        doc.strokeColor('#FFFFFF').lineWidth(0.5).opacity(opacity)
+            .moveTo(rightLineStart + (i * rightSegmentWidth), bottomSectionY)
+            .lineTo(rightLineStart + ((i + 1) * rightSegmentWidth), bottomSectionY)
+            .stroke();
+    }
+    doc.opacity(1);
 
-    yPos = summaryCardY + summaryCardHeight + 15;
+    yPos = summaryCardY + summaryCardHeight + 18;
 
     // ========== MAIN TWO-COLUMN LAYOUT ==========
     const sidebarWidth = 160;
