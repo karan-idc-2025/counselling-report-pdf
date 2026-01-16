@@ -11,7 +11,7 @@ const { sampleData } = require('./sampleData');
  * @param {Object} data - Student data object
  * @param {string} outputPath - Path to save PDF (default: 'recommendation-report.pdf')
  */
-function generateCareerReportPDF(data, outputPath = 'recommendation-report.pdf') {
+function generateCareerReportPDF(data, outputPath = `class-${sampleData.class}-recommendation-report.pdf`) {
     const doc = new PDFDocument({
         size: 'A4',
         margins: { top: PAGE.margin, bottom: PAGE.margin, left: PAGE.margin, right: PAGE.margin },

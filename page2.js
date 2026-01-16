@@ -116,8 +116,8 @@ function renderPage2(doc, data, page1Info = {}) {
         doc.circle(cardContentX + 6, contentY + 5, 6).fill();
         doc.restore();
         
-        doc.fillColor(PAGE2_COLORS.darkGrayText).fontSize(12).font('Helvetica-Bold')
-            .text(cluster.name, cardContentX + 18, contentY);
+        doc.fillColor(COLORS.black).fontSize(12).font('Helvetica-Bold')
+            .text(cluster.title, cardContentX + 18, contentY);
 
         contentY += 20;
 
@@ -134,26 +134,13 @@ function renderPage2(doc, data, page1Info = {}) {
 
         // Bullet points for why
         doc.fillColor(COLORS.black).fontSize(7).font('Helvetica');
-        cluster.whyReasons.forEach(reason => {
+        cluster.whyCluster.forEach(reason => {
             const textHeight = doc.heightOfString(`• ${reason}`, { width: cardContentWidth - 10 });
             doc.text(`• ${reason}`, cardContentX, contentY, { width: cardContentWidth - 10 });
             contentY += textHeight + 2;
         });
 
         contentY += 5;
-
-        // "Subject Combination Eligibility:" section
-        doc.fillColor(COLORS.black).fontSize(8).font('Helvetica-Bold')
-            .text('Subject Combination Eligibility:', cardContentX, contentY);
-        contentY += 12;
-
-        doc.fillColor(COLORS.black).fontSize(7).font('Helvetica');
-        cluster.subjectEligibility.forEach(subject => {
-            doc.text(`• ${subject}`, cardContentX, contentY);
-            contentY += 10;
-        });
-
-        contentY += 3;
 
         // "Top Careers:" section
         doc.fillColor(COLORS.black).fontSize(8).font('Helvetica-Bold')
@@ -177,13 +164,11 @@ function renderPage2(doc, data, page1Info = {}) {
         height += 12; // "Why this Cluster?" title
         
         doc.fontSize(7).font('Helvetica');
-        cluster.whyReasons.forEach(reason => {
+        cluster.whyCluster.forEach(reason => {
             height += doc.heightOfString(`• ${reason}`, { width: width - 34 }) + 2;
         });
         
-        height += 5 + 12; // Gap + "Subject Combination Eligibility:" title
-        height += cluster.subjectEligibility.length * 10;
-        height += 3 + 12; // Gap + "Top Careers:" title
+        height += 5 + 12; // Gap + "Top Careers:" title
         height += cluster.topCareers.length * 10;
         height += 12; // Bottom padding
         
@@ -191,7 +176,7 @@ function renderPage2(doc, data, page1Info = {}) {
     }
 
     // Draw primary cluster cards
-    const primaryClusters = data.careerClusters.primary;
+    const primaryClusters = data.ai_recommendation_structured.careerClusters.primary;
     let maxCardHeight = 0;
 
     if (primaryClusters.length >= 1) {
@@ -220,84 +205,99 @@ function renderPage2(doc, data, page1Info = {}) {
     layout = getContentLayout(yPos);
 
     // ========== BACKUP CAREER CLUSTER SECTION ==========
-    const backupCluster = data.careerClusters.backup[0];
+    const backupCluster = data.ai_recommendation_structured.careerClusters.backup[0];
+    const streamRecommendation = data.ai_recommendation_structured.streamRecommendation;
     
     if (backupCluster) {
-        // Layout: Main card (60%), Info boxes (35%), with 5% gap
-        const mainCardWidth = layout.width * 0.58;
-        const infoBoxWidth = layout.width * 0.38;
-        const layoutGap = layout.width * 0.04;
+        // Calculate content widths inside ONE card
+        const leftContentWidth = layout.width * 0.55;  // Why this Cluster section
+        const rightContentWidth = layout.width * 0.40; // Eligibility + Top Careers
 
-        // Main backup card
-        const backupCardHeight = 130;
-        drawRoundedRect(layout.marginLeft, yPos, mainCardWidth, backupCardHeight, cardRadius, PAGE2_COLORS.lightGrayCard);
+        // Calculate LEFT side height
+        let leftHeight = 14; // "Why this Cluster?" title
+        doc.fontSize(7).font('Helvetica');
+        backupCluster.whyCluster.forEach(reason => {
+            leftHeight += doc.heightOfString(`• ${reason}`, { width: leftContentWidth - 30 }) + 3;
+        });
 
-        let backupContentY = yPos + 12;
-        const backupContentX = layout.marginLeft + 12;
-        const backupContentWidth = mainCardWidth - 24;
+        // Calculate RIGHT side height
+        let rightHeight = 11 + 14; // "Subject Combination" + "Eligibility:" titles
+        rightHeight += 12; // Stream name
+        rightHeight += 10; // Gap
+        rightHeight += 14; // "Top Careers:" title
+        rightHeight += backupCluster.topCareers.length * 11; // Career items
 
-        // Icon + Title
+        // Card height = header + divider + max(left, right) + padding
+        const headerHeight = 15 + 25 + 12; // top padding + title + divider spacing
+        const contentHeight = Math.max(leftHeight, rightHeight);
+        const backupCardHeight = headerHeight + contentHeight + 15; // + bottom padding
+
+        // ONE single card for entire backup section
+        drawRoundedRect(layout.marginLeft, yPos, layout.width, backupCardHeight, cardRadius, PAGE2_COLORS.lightGrayCard);
+
+        let backupContentY = yPos + 15;
+        const backupContentX = layout.marginLeft + 15;
+
+        // Icon + Title (spans full width)
         doc.save();
         doc.fillColor(PAGE2_COLORS.primaryPurple);
         doc.circle(backupContentX + 6, backupContentY + 5, 6).fill();
         doc.restore();
         
-        doc.fillColor(PAGE2_COLORS.darkGrayText).fontSize(12).font('Helvetica-Bold')
-            .text(backupCluster.name, backupContentX + 18, backupContentY);
+        doc.fillColor(COLORS.black).fontSize(12).font('Helvetica-Bold')
+            .text(backupCluster.title, backupContentX + 20, backupContentY);
 
-        backupContentY += 20;
+        backupContentY += 25;
 
-        // Divider line
+        // Divider line (spans full width)
         doc.strokeColor('#E5E7EB').lineWidth(0.5)
-            .moveTo(backupContentX, backupContentY).lineTo(layout.marginLeft + mainCardWidth - 12, backupContentY).stroke();
+            .moveTo(backupContentX, backupContentY).lineTo(layout.marginLeft + layout.width - 15, backupContentY).stroke();
 
-        backupContentY += 8;
-
-        // "Why this Cluster?" section
-        doc.fillColor(COLORS.black).fontSize(8).font('Helvetica-Bold')
-            .text('Why this Cluster?', backupContentX, backupContentY);
         backupContentY += 12;
 
-        doc.fillColor(COLORS.black).fontSize(7).font('Helvetica');
-        backupCluster.whyReasons.forEach(reason => {
-            const textHeight = doc.heightOfString(`• ${reason}`, { width: backupContentWidth - 10 });
-            doc.text(`• ${reason}`, backupContentX, backupContentY, { width: backupContentWidth - 10 });
-            backupContentY += textHeight + 2;
-        });
-
-        // Right side: Info boxes
-        const infoBoxX = layout.marginLeft + mainCardWidth + layoutGap;
-        const infoBoxHeight = (backupCardHeight - 10) / 2;
-
-        // Subject Combination Eligibility box
-        drawRoundedRect(infoBoxX, yPos, infoBoxWidth, infoBoxHeight, 8, PAGE2_COLORS.lightGrayCard);
+        // LEFT SIDE: "Why this Cluster?" section
+        const leftX = backupContentX;
+        let leftY = backupContentY;
         
-        let infoBoxY = yPos + 10;
-        doc.fillColor(COLORS.black).fontSize(8).font('Helvetica-Bold')
-            .text('Subject Combination', infoBoxX + 10, infoBoxY);
-        infoBoxY += 10;
-        doc.text('Eligibility:', infoBoxX + 10, infoBoxY);
-        infoBoxY += 14;
+        doc.fillColor(COLORS.black).fontSize(9).font('Helvetica-Bold')
+            .text('Why this Cluster?', leftX, leftY);
+        leftY += 14;
 
         doc.fillColor(COLORS.black).fontSize(7).font('Helvetica');
-        backupCluster.subjectEligibility.forEach(subject => {
-            doc.text(`• ${subject}`, infoBoxX + 10, infoBoxY);
-            infoBoxY += 10;
+        backupCluster.whyCluster.forEach(reason => {
+            const textHeight = doc.heightOfString(`• ${reason}`, { width: leftContentWidth - 30 });
+            doc.text(`• ${reason}`, leftX, leftY, { width: leftContentWidth - 30 });
+            leftY += textHeight + 3;
         });
 
-        // Top Careers box
-        const topCareersBoxY = yPos + infoBoxHeight + 10;
-        drawRoundedRect(infoBoxX, topCareersBoxY, infoBoxWidth, infoBoxHeight, 8, PAGE2_COLORS.lightGrayCard);
-        
-        let careersBoxY = topCareersBoxY + 10;
-        doc.fillColor(COLORS.black).fontSize(8).font('Helvetica-Bold')
-            .text('Top Careers:', infoBoxX + 10, careersBoxY);
-        careersBoxY += 14;
+        // RIGHT SIDE: Subject Eligibility + Top Careers (inside same card, just different X position)
+        const rightX = layout.marginLeft + leftContentWidth + 10;
+        let rightY = backupContentY;
+
+        // Subject Combination Eligibility
+        doc.fillColor(COLORS.black).fontSize(9).font('Helvetica-Bold')
+            .text('Subject Combination', rightX, rightY);
+        rightY += 11;
+        doc.text('Eligibility:', rightX, rightY);
+        rightY += 14;
+
+        doc.fillColor(COLORS.black).fontSize(7).font('Helvetica');
+        if (streamRecommendation && streamRecommendation.name) {
+            doc.text(`• ${streamRecommendation.name}`, rightX, rightY);
+            rightY += 12;
+        }
+
+        rightY += 10;
+
+        // Top Careers
+        doc.fillColor(COLORS.black).fontSize(9).font('Helvetica-Bold')
+            .text('Top Careers:', rightX, rightY);
+        rightY += 14;
 
         doc.fillColor(PAGE2_COLORS.cyanLink).fontSize(7).font('Helvetica');
         backupCluster.topCareers.forEach(career => {
-            doc.text(`• ${career}`, infoBoxX + 10, careersBoxY, { underline: true });
-            careersBoxY += 10;
+            doc.text(`• ${career}`, rightX, rightY, { underline: true });
+            rightY += 11;
         });
 
         yPos += backupCardHeight + 15;
@@ -318,9 +318,20 @@ function renderPage2(doc, data, page1Info = {}) {
     yPos += 22;
     layout = getContentLayout(yPos);
 
-    // Aspiration evaluation box
-    const aspirationData = data.careerAspirationEvaluation;
-    const aspirationBoxHeight = calculateAspirationBoxHeight(aspirationData, layout.width);
+    // Get aspiration data from new structure
+    const careerAspirations = data.ai_recommendation_structured.careerAspirationEvaluation;
+    const streamAspiration = data.ai_recommendation_structured.streamAspirationEvaluation;
+    
+    // Calculate box height based on content
+    let aspirationBoxHeight = 24; // Top and bottom padding
+    
+    // Career aspirations
+    careerAspirations.forEach(() => {
+        aspirationBoxHeight += 50; // Each career aspiration row
+    });
+    
+    // Stream aspiration
+    aspirationBoxHeight += 60; // Stream aspiration section
 
     drawRoundedRect(layout.marginLeft, yPos, layout.width, aspirationBoxHeight, 12, PAGE2_COLORS.lightPurpleBackground);
 
@@ -328,54 +339,53 @@ function renderPage2(doc, data, page1Info = {}) {
     const aspContentX = layout.marginLeft + 15;
     const aspContentWidth = layout.width - 30;
 
-    // Aspirational Career
-    doc.fillColor(COLORS.black).fontSize(8).font('Helvetica-Bold')
-        .text('Aspirational Career: ', aspContentX, aspContentY, { continued: true });
-    doc.fillColor(COLORS.black).font('Helvetica')
-        .text(aspirationData.aspirationalCareer);
-    aspContentY += 14;
+    // Career Aspiration(s)
+    careerAspirations.forEach((asp) => {
+        doc.fillColor(COLORS.black).fontSize(9).font('Helvetica-Bold')
+            .text('Career Aspiration: ', aspContentX, aspContentY, { continued: true });
+        doc.fillColor(COLORS.black).font('Helvetica')
+            .text(asp.aspiration);
+        aspContentY += 14;
 
-    // Cluster Analysis
-    doc.fillColor(COLORS.black).fontSize(8).font('Helvetica-Bold')
-        .text('Cluster Analysis: ', aspContentX, aspContentY, { continued: true });
-    doc.fillColor(COLORS.black).font('Helvetica')
-        .text(aspirationData.clusterAnalysis, { width: aspContentWidth - 90 });
-    aspContentY += doc.heightOfString(aspirationData.clusterAnalysis, { width: aspContentWidth - 90 }) + 10;
+        doc.fillColor(COLORS.black).fontSize(8).font('Helvetica-Bold')
+            .text('Cluster Status: ', aspContentX, aspContentY, { continued: true });
+        doc.fillColor(COLORS.black).font('Helvetica')
+            .text(asp.status, { width: aspContentWidth - 90 });
+        aspContentY += 14;
 
-    // Evaluation section
-    doc.fillColor(COLORS.black).fontSize(8).font('Helvetica-Bold')
-        .text('Evaluation:', aspContentX, aspContentY);
-    aspContentY += 12;
-
-    doc.fillColor(COLORS.black).fontSize(7).font('Helvetica');
-    aspirationData.evaluation.forEach(item => {
-        const textHeight = doc.heightOfString(`• ${item}`, { width: aspContentWidth - 10 });
-        doc.text(`• ${item}`, aspContentX, aspContentY, { width: aspContentWidth - 10 });
-        aspContentY += textHeight + 2;
+        // Verdict with color coding
+        doc.fillColor(COLORS.black).fontSize(8).font('Helvetica-Bold')
+            .text('Verdict: ', aspContentX, aspContentY, { continued: true });
+        const verdictColor = asp.verdict === 'Not Suitable' ? '#EF4444' : (asp.verdict === 'Partially Suitable' ? '#F59E0B' : '#22C55E');
+        doc.fillColor(verdictColor).font('Helvetica-Bold')
+            .text(asp.verdict);
+        aspContentY += 18;
     });
 
-    aspContentY += 6;
+    // Divider
+    doc.strokeColor('#D1D5DB').lineWidth(0.5)
+        .moveTo(aspContentX, aspContentY).lineTo(aspContentX + aspContentWidth - 10, aspContentY).stroke();
+    aspContentY += 10;
 
-    // Verdict
-    doc.fillColor(COLORS.black).fontSize(8).font('Helvetica-Bold')
-        .text('Verdict: ', aspContentX, aspContentY, { continued: true });
+    // Stream Aspiration Evaluation
+    doc.fillColor(COLORS.black).fontSize(9).font('Helvetica-Bold')
+        .text('Stream Aspiration: ', aspContentX, aspContentY, { continued: true });
     doc.fillColor(COLORS.black).font('Helvetica')
-        .text(aspirationData.verdict);
+        .text(streamAspiration.aspiration);
     aspContentY += 14;
 
-    // Suggestions section
-    if (aspirationData.suggestions && aspirationData.suggestions.length > 0) {
-        doc.fillColor(COLORS.black).fontSize(8).font('Helvetica-Bold')
-            .text('Suggestions:', aspContentX, aspContentY);
-        aspContentY += 12;
+    doc.fillColor(COLORS.black).fontSize(8).font('Helvetica-Bold')
+        .text('Evaluation: ', aspContentX, aspContentY, { continued: true });
+    doc.fillColor(COLORS.black).font('Helvetica')
+        .text(streamAspiration.evaluation, { width: aspContentWidth - 60 });
+    aspContentY += doc.heightOfString(streamAspiration.evaluation, { width: aspContentWidth - 60 }) + 6;
 
-        doc.fillColor(COLORS.black).fontSize(7).font('Helvetica');
-        aspirationData.suggestions.forEach(item => {
-            const textHeight = doc.heightOfString(`• ${item}`, { width: aspContentWidth - 10 });
-            doc.text(`• ${item}`, aspContentX, aspContentY, { width: aspContentWidth - 10 });
-            aspContentY += textHeight + 2;
-        });
-    }
+    // Stream Verdict
+    doc.fillColor(COLORS.black).fontSize(8).font('Helvetica-Bold')
+        .text('Verdict: ', aspContentX, aspContentY, { continued: true });
+    const streamVerdictColor = streamAspiration.verdict === 'Not Suitable' ? '#EF4444' : (streamAspiration.verdict === 'Partially Suitable' ? '#F59E0B' : '#22C55E');
+    doc.fillColor(streamVerdictColor).font('Helvetica-Bold')
+        .text(streamAspiration.verdict);
 
     // Add minimal spacing before footer to maximize space
     yPos += aspirationBoxHeight + 15;
@@ -432,36 +442,9 @@ function renderPage2(doc, data, page1Info = {}) {
     const copyrightText = 'Copyright © Medhavi Professional Services Pvt. Ltd. All Rights Reserved';
     const copyrightWidth = doc.widthOfString(copyrightText);
     const copyrightX = footerLayout.marginLeft + (footerLayout.width - copyrightWidth) / 2;
-    const copyrightY = footerY + footerHeight + 3; // Reduced spacing from 8 to 3
+    const copyrightY = footerY + footerHeight + 3;
     doc.text(copyrightText, copyrightX, copyrightY, { lineBreak: false });
 
-    // Helper function to calculate aspiration box height
-    function calculateAspirationBoxHeight(aspData, availableWidth) {
-        let height = 24; // Top and bottom padding
-        height += 14; // Aspirational Career line
-        
-        doc.fontSize(8).font('Helvetica');
-        height += doc.heightOfString(aspData.clusterAnalysis, { width: availableWidth - 120 }) + 10;
-        
-        height += 12; // Evaluation title
-        doc.fontSize(7).font('Helvetica');
-        aspData.evaluation.forEach(item => {
-            height += doc.heightOfString(`• ${item}`, { width: availableWidth - 40 }) + 2;
-        });
-        
-        height += 6 + 14; // Gap + Verdict line
-        
-        if (aspData.suggestions && aspData.suggestions.length > 0) {
-            height += 12; // Suggestions title
-            aspData.suggestions.forEach(item => {
-                height += doc.heightOfString(`• ${item}`, { width: availableWidth - 40 }) + 2;
-            });
-        }
-        
-        height += 10; // Bottom padding
-        
-        return height;
-    }
 }
 
 module.exports = { renderPage2 };

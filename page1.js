@@ -188,7 +188,7 @@ function renderPage1(doc, data) {
 
     mainY += 20;
 
-    const subjectPillText = `Science with ${data.recommendedSubjectCombination.code} (${data.recommendedSubjectCombination.subjects.join(', ')})`;
+    const subjectPillText = `${data.recommendedSubjectCombination.code}`;
     doc.font('Helvetica-Bold').fontSize(10);
     const subjPillWidth = doc.widthOfString(subjectPillText) + 24;
     
@@ -196,54 +196,98 @@ function renderPage1(doc, data) {
     drawRoundedRect(mainContentX, mainY, subjPillWidth, 24, 12, COLORS.purple);
     doc.fillColor(COLORS.white).fontSize(10).text(subjectPillText, mainContentX + 12, mainY + 8);
 
-    mainY += 60;
+    mainY += 40; // 24px pill height + 16px spacing
 
-    // Calculate total height needed for the purple box
-    const whyChooseBoxHeight = 165;
-    const whyChooseBoxY = mainY;
+    // Calculate dynamic height for combined box
+    doc.fontSize(7).font('Helvetica');
     
-    mainY = checkMainContentPageBreak(mainY, whyChooseBoxHeight + 20);
-
-    // Draw light purple background box
-    drawRoundedRect(mainContentX, mainY, mainContentWidth, whyChooseBoxHeight, 8, '#EDE9FE');
-
-    // Content inside the box
-    let boxContentY = mainY + 10;
-
-    doc.fillColor(COLORS.black).fontSize(9).font('Helvetica-Bold')
-        .text('Why choose this Subject Combination:', mainContentX + 10, boxContentY);
-    boxContentY += 12;
-    doc.fillColor(COLORS.black).fontSize(8).font('Helvetica-Bold')
-        .text('Alignment with Student Profile:', mainContentX + 10, boxContentY);
-    boxContentY += 12;
-
-    boxContentY = drawBulletList(data.whyChooseReasons, mainContentX + 10, boxContentY, mainContentWidth - 20, { fontSize: 7 });
-
-    boxContentY += 5;
-
-    doc.fillColor(COLORS.black).fontSize(8).font('Helvetica-Bold')
-        .text('Cluster Set Access: PCM provides access to:', mainContentX + 10, boxContentY);
-    boxContentY += 12;
-    boxContentY = drawBulletList(data.clusterSetAccess, mainContentX + 10, boxContentY, mainContentWidth - 20, { fontSize: 7 });
-
-    doc.fillColor(COLORS.black).fontSize(7).font('Helvetica')
-        .text('These sets match your highest fitment scores and maximize your career options in line with your profile.', mainContentX + 10, boxContentY, { width: mainContentWidth - 20 });
-
-    mainY = mainY + whyChooseBoxHeight + 10;
+    // Calculate height for "Why choose" section
+    let whyChooseHeight = 12 + 12; // Title + "Alignment" title
+    data.whyChooseReasons.forEach(reason => {
+        whyChooseHeight += doc.heightOfString(`• ${reason}`, { width: mainContentWidth - 30 }) + 2;
+    });
+    whyChooseHeight += 5 + 12; // Gap + "Cluster Set Access" title
+    data.clusterSetAccess.forEach(item => {
+        whyChooseHeight += doc.heightOfString(`• ${item}`, { width: mainContentWidth - 30 }) + 2;
+    });
+    whyChooseHeight += doc.heightOfString('These sets match your highest fitment scores and maximize your career options in line with your profile.', { width: mainContentWidth - 30 });
     
-    mainY = checkMainContentPageBreak(mainY, 60);
-
-    doc.fillColor(COLORS.black).fontSize(9).font('Helvetica-Bold')
-        .text('Ideal Subjects to Consider:', mainContentX, mainY);
-    mainY += 12;
-
+    // Calculate height for "Ideal Subjects" section (including separator line)
+    let idealSubjectsHeight = 10 + 1 + 12 + 12; // Gap + separator + gap + Title
     const idealSubjects = [...data.recommendedSubjectCombination.subjects];
     if (data.optionalSubjects?.length > 0) {
         idealSubjects.push(`(Optional: ${data.optionalSubjects.join(', ')}, as per school availability and interest)`);
     }
-    mainY = drawBulletList(idealSubjects, mainContentX, mainY, mainContentWidth, { fontSize: 7 });
+    idealSubjects.forEach(subject => {
+        idealSubjectsHeight += doc.heightOfString(`• ${subject}`, { width: mainContentWidth - 30 }) + 2;
+    });
+    
+    // Total box height
+    const combinedBoxHeight = 15 + whyChooseHeight + idealSubjectsHeight + 15; // top padding + content + bottom padding
+    
+    mainY = checkMainContentPageBreak(mainY, combinedBoxHeight + 20);
 
-    mainY += 8;
+    // Draw combined box with #F5F8FF background
+    drawRoundedRect(mainContentX, mainY, mainContentWidth, combinedBoxHeight, 8, '#F5F8FF');
+
+    // Content inside the box
+    let boxContentY = mainY + 12;
+
+    // Why choose this Subject Combination section
+    doc.fillColor(COLORS.black).fontSize(9).font('Helvetica-Bold')
+        .text('Why choose this Subject Combination:', mainContentX + 12, boxContentY);
+    boxContentY += 14;
+    doc.fillColor(COLORS.black).fontSize(8).font('Helvetica-Bold')
+        .text('Alignment with Student Profile:', mainContentX + 12, boxContentY);
+    boxContentY += 12;
+
+    doc.fillColor(COLORS.black).fontSize(7).font('Helvetica');
+    data.whyChooseReasons.forEach(reason => {
+        const textHeight = doc.heightOfString(`• ${reason}`, { width: mainContentWidth - 30 });
+        doc.text(`• ${reason}`, mainContentX + 12, boxContentY, { width: mainContentWidth - 30 });
+        boxContentY += textHeight + 2;
+    });
+
+    boxContentY += 5;
+
+    doc.fillColor(COLORS.black).fontSize(8).font('Helvetica-Bold')
+        .text(`Cluster Set Access: ${data.recommendedSubjectCombination.code} provides access to:`, mainContentX + 12, boxContentY);
+    boxContentY += 12;
+    
+    doc.fillColor(COLORS.black).fontSize(7).font('Helvetica');
+    data.clusterSetAccess.forEach(item => {
+        const textHeight = doc.heightOfString(`• ${item}`, { width: mainContentWidth - 30 });
+        doc.text(`• ${item}`, mainContentX + 12, boxContentY, { width: mainContentWidth - 30 });
+        boxContentY += textHeight + 2;
+    });
+
+    doc.fillColor(COLORS.black).fontSize(7).font('Helvetica')
+        .text('These sets match your highest fitment scores and maximize your career options in line with your profile.', mainContentX + 12, boxContentY, { width: mainContentWidth - 30 });
+    boxContentY += doc.heightOfString('These sets match your highest fitment scores and maximize your career options in line with your profile.', { width: mainContentWidth - 30 });
+
+    boxContentY += 10;
+
+    // Separator line between "Why choose" and "Ideal Subjects" sections
+    doc.strokeColor('#E5E7EB').lineWidth(0.5)
+        .moveTo(mainContentX + 12, boxContentY)
+        .lineTo(mainContentX + mainContentWidth - 12, boxContentY)
+        .stroke();
+
+    boxContentY += 12;
+
+    // Ideal Subjects to Consider section (inside same box)
+    doc.fillColor(COLORS.black).fontSize(9).font('Helvetica-Bold')
+        .text('Ideal Subjects to Consider:', mainContentX + 12, boxContentY);
+    boxContentY += 12;
+
+    doc.fillColor(COLORS.black).fontSize(7).font('Helvetica');
+    idealSubjects.forEach(subject => {
+        const textHeight = doc.heightOfString(`• ${subject}`, { width: mainContentWidth - 30 });
+        doc.text(`• ${subject}`, mainContentX + 12, boxContentY, { width: mainContentWidth - 30 });
+        boxContentY += textHeight + 2;
+    });
+
+    mainY = mainY + combinedBoxHeight + 10;
 
     doc.fillColor(COLORS.black).fontSize(10).font('Helvetica-Bold')
         .text('Subject Combination Aspiration Evaluation', mainContentX, mainY);
@@ -254,10 +298,10 @@ function renderPage1(doc, data) {
 
     let aspY = mainY + 10;
     doc.fillColor(COLORS.black).fontSize(8).font('Helvetica-Bold')
-        .text('Aspiration: PCM Alignment:', mainContentX + 10, aspY);
+        .text(`Aspiration: ${data.recommendedSubjectCombination.code} Alignment:`, mainContentX + 10, aspY);
     aspY += 12;
 
-    aspY = drawBulletList(data.aspirationAlignment, mainContentX + 10, aspY, mainContentWidth - 20, { fontSize: 7 });
+    aspY = drawBulletList(data.aspirationAlignment, mainContentX + 10, aspY, mainContentWidth - 20, { fontSize: 7, color: COLORS.black });
 
     aspY += 5;
     doc.fillColor(COLORS.black).fontSize(8).font('Helvetica-Bold')
@@ -365,85 +409,115 @@ function renderPage1(doc, data) {
         return currentY;
     }
 
-    // "You in a Glance" header
+    // "You in a Glance" header - CENTERED horizontally and vertically
     const glanceText = 'You in a Glance';
     const glancePillWidth = sidebarContentWidth;
-    const glancePillHeight = 22;
+    const glancePillHeight = 24;
+    const glancePillX = sidebarX + 10;
 
-    drawRoundedRect(sidebarX + 10, sidebarY, glancePillWidth, glancePillHeight, 11, COLORS.white, COLORS.purple);
+    drawRoundedRect(glancePillX, sidebarY, glancePillWidth, glancePillHeight, 12, COLORS.white, COLORS.purple);
 
-    const iconX = sidebarX + 24;
-    const iconY = sidebarY + 11;
+    // Calculate centered position for icon + text
+    doc.fontSize(9).font('Helvetica');
+    const glanceTextWidth = doc.widthOfString(glanceText);
+    const glanceTextHeight = 9; // approx font height
+    const iconWidth = 14; // icon space
+    const totalContentWidth = iconWidth + glanceTextWidth;
+    const contentStartX = glancePillX + (glancePillWidth - totalContentWidth) / 2;
+
+    // Draw person icon centered vertically
+    const iconX = contentStartX + 6;
+    const iconCenterY = sidebarY + (glancePillHeight / 2);
     doc.save();
     doc.fillColor(COLORS.purple);
-    doc.circle(iconX, iconY - 2, 3).fill();
-    doc.ellipse(iconX, iconY + 4, 4, 2.5).fill();
+    doc.circle(iconX, iconCenterY - 3, 3).fill();
+    doc.ellipse(iconX, iconCenterY + 3, 4, 2.5).fill();
     doc.restore();
 
-    doc.fillColor(COLORS.black).fontSize(8).font('Helvetica')
-        .text(glanceText, sidebarX + 36, sidebarY + 6);
+    // Draw text centered horizontally and vertically
+    const textY = sidebarY + (glancePillHeight - glanceTextHeight) / 2;
+    doc.fillColor(COLORS.black).fontSize(9).font('Helvetica')
+        .text(glanceText, contentStartX + iconWidth, textY);
 
-    sidebarY += 30;
+    sidebarY += 32;
 
-    // Student name with badge
-    doc.font('Helvetica-Bold').fontSize(11);
+    // Student name with badge - centered vertically
+    doc.font('Helvetica-Bold').fontSize(12);
     const nameWidth = doc.widthOfString(data.name);
 
-    doc.font('Helvetica-Bold').fontSize(6);
+    doc.font('Helvetica-Bold').fontSize(7);
     const badgeTextWidth = doc.widthOfString(data.board);
-    const badgeWidth = badgeTextWidth + 12;
+    const badgeWidth = badgeTextWidth + 14;
+    const badgeHeight = 16;
 
-    doc.fillColor(COLORS.black).fontSize(11).font('Helvetica-Bold')
+    // Draw name
+    doc.fillColor(COLORS.black).fontSize(12).font('Helvetica-Bold')
         .text(data.name, sidebarX + 12, sidebarY);
 
+    // Badge positioned after name, vertically centered with text
     const badgeX = sidebarX + 12 + nameWidth + 8;
-    const badgeY = sidebarY + 1;
-    drawRoundedRect(badgeX, badgeY, badgeWidth, 14, 7, COLORS.purple);
-    doc.fillColor(COLORS.white).fontSize(6).font('Helvetica-Bold')
-        .text(data.board, badgeX + 6, badgeY + 3);
+    const badgeY = sidebarY - 1; // Slightly adjust to center with name
+    drawRoundedRect(badgeX, badgeY, badgeWidth, badgeHeight, 8, '#E6F7FE'); // Light blue color
+    doc.fillColor('#0EA5E9').fontSize(7).font('Helvetica-Bold') // Blue text color
+        .text(data.board, badgeX + 7, badgeY + 4);
 
-    sidebarY += 20;
+    sidebarY += 24;
 
-    // Info boxes
-    const boxGap = 5;
-    const boxHeight = 36;
+    // Info boxes - Class smaller, School larger
+    const boxGap = 8;
     const classNum = parseInt(data.class);
     const showStream = (classNum >= 11 && classNum <= 12) && data.stream;
 
-    let boxWidth, classBoxX, streamBoxX, schoolBoxX;
+    let classBoxWidth, streamBoxWidth, schoolBoxWidth, classBoxX, streamBoxX, schoolBoxX;
 
     if (showStream) {
-        boxWidth = (sidebarContentWidth - (boxGap * 2)) / 3;
+        classBoxWidth = 40;
+        streamBoxWidth = 45;
+        schoolBoxWidth = sidebarContentWidth - classBoxWidth - streamBoxWidth - (boxGap * 2);
         classBoxX = sidebarX + 10;
-        streamBoxX = classBoxX + boxWidth + boxGap;
-        schoolBoxX = streamBoxX + boxWidth + boxGap;
+        streamBoxX = classBoxX + classBoxWidth + boxGap;
+        schoolBoxX = streamBoxX + streamBoxWidth + boxGap;
     } else {
-        boxWidth = (sidebarContentWidth - boxGap) / 2;
+        classBoxWidth = 45; // Smaller class box
+        schoolBoxWidth = sidebarContentWidth - classBoxWidth - boxGap; // Larger school box
         classBoxX = sidebarX + 10;
-        schoolBoxX = classBoxX + boxWidth + boxGap;
+        schoolBoxX = classBoxX + classBoxWidth + boxGap;
     }
+
+    // Calculate dynamic box height based on school name length
+    doc.fontSize(9).font('Helvetica-Bold');
+    const schoolTextHeight = doc.heightOfString(data.school, { width: schoolBoxWidth - 8 });
+    const minBoxHeight = 40;
+    const boxHeight = Math.max(minBoxHeight, 22 + schoolTextHeight + 8); // label area + text + padding
 
     sidebarY = checkSidebarPageBreak(sidebarY, boxHeight + 10);
 
-    drawRoundedRect(classBoxX, sidebarY, boxWidth, boxHeight, 6, COLORS.white, COLORS.lightGray);
-    doc.fillColor(COLORS.black).fontSize(7).font('Helvetica')
-        .text('Class', classBoxX + 8, sidebarY + 6);
-    doc.fillColor(COLORS.black).fontSize(8).font('Helvetica-Bold')
-        .text(data.class, classBoxX + 8, sidebarY + 20);
+    // Class box - smaller, centered text
+    drawRoundedRect(classBoxX, sidebarY, classBoxWidth, boxHeight, 8, COLORS.white, COLORS.lightGray);
+    doc.fillColor(COLORS.gray).fontSize(7).font('Helvetica');
+    const classLabelWidth = doc.widthOfString('Class');
+    doc.text('Class', classBoxX + (classBoxWidth - classLabelWidth) / 2, sidebarY + 8);
+    doc.fillColor(COLORS.black).fontSize(9).font('Helvetica-Bold');
+    const classValueWidth = doc.widthOfString(data.class);
+    doc.text(data.class, classBoxX + (classBoxWidth - classValueWidth) / 2, sidebarY + 22);
 
     if (showStream) {
-        drawRoundedRect(streamBoxX, sidebarY, boxWidth, boxHeight, 6, COLORS.white, COLORS.lightGray);
-        doc.fillColor(COLORS.black).fontSize(7).font('Helvetica')
-            .text('Stream', streamBoxX + 8, sidebarY + 6);
-        doc.fillColor(COLORS.black).fontSize(11).font('Helvetica-Bold')
-            .text(data.stream, streamBoxX + 8, sidebarY + 20, { width: boxWidth - 16, ellipsis: true });
+        // Stream box
+        drawRoundedRect(streamBoxX, sidebarY, streamBoxWidth, boxHeight, 8, COLORS.white, COLORS.lightGray);
+        doc.fillColor(COLORS.gray).fontSize(7).font('Helvetica');
+        const streamLabelWidth = doc.widthOfString('Stream');
+        doc.text('Stream', streamBoxX + (streamBoxWidth - streamLabelWidth) / 2, sidebarY + 8);
+        doc.fillColor(COLORS.black).fontSize(9).font('Helvetica-Bold')
+            .text(data.stream, streamBoxX + 4, sidebarY + 22, { width: streamBoxWidth - 8, align: 'center' });
     }
 
-    drawRoundedRect(schoolBoxX, sidebarY, boxWidth, boxHeight, 6, COLORS.white, COLORS.lightGray);
-    doc.fillColor(COLORS.black).fontSize(7).font('Helvetica')
-        .text('School', schoolBoxX + 8, sidebarY + 6);
-    doc.fillColor(COLORS.black).fontSize(7).font('Helvetica-Bold')
-        .text(data.school, schoolBoxX + 8, sidebarY + 20, { width: boxWidth - 16, ellipsis: true });
+    // School box - larger, dynamic height based on school name
+    drawRoundedRect(schoolBoxX, sidebarY, schoolBoxWidth, boxHeight, 8, COLORS.white, COLORS.lightGray);
+    doc.fillColor(COLORS.gray).fontSize(7).font('Helvetica');
+    const schoolLabelWidth = doc.widthOfString('School');
+    doc.text('School', schoolBoxX + (schoolBoxWidth - schoolLabelWidth) / 2, sidebarY + 8);
+    doc.fillColor(COLORS.black).fontSize(9).font('Helvetica-Bold')
+        .text(data.school, schoolBoxX + 4, sidebarY + 22, { width: schoolBoxWidth - 8, align: 'center' });
 
     sidebarY += boxHeight + 12;
 
@@ -498,16 +572,13 @@ function renderPage1(doc, data) {
         .text('Personality Area:', sidebarX + 12, sidebarY);
     sidebarY += 12;
 
+    // "You seem to be:" pill
     sidebarY = checkSidebarPageBreak(sidebarY, 30);
-    drawLabelBadge('Medium Scored Areas', sidebarX + 14, sidebarY, COLORS.lightGray, COLORS.black, sidebarContentWidth - 8);
-    sidebarY += 16;
-    sidebarY = drawSidebarBulletList(data.personalityArea.mediumScoredAreas, sidebarX + 14, sidebarY, sidebarContentWidth, { fontSize: 6 });
-
-    sidebarY += 4;
-    sidebarY = checkSidebarPageBreak(sidebarY, 30);
-    drawLabelBadge('Low Scored Areas', sidebarX + 14, sidebarY, '#FEE2E2', '#991B1B', sidebarContentWidth - 8);
-    sidebarY += 16;
-    sidebarY = drawSidebarBulletList(data.personalityArea.lowScoredAreas, sidebarX + 14, sidebarY, sidebarContentWidth, { fontSize: 6 });
+    drawLabelBadge('You seem to be:', sidebarX + 14, sidebarY, '#FBF1E7', COLORS.black, sidebarContentWidth - 8);
+    sidebarY += 18;
+    
+    // Personality traits as bullet list
+    sidebarY = drawSidebarBulletList(data.personalityArea.youSeemToBe, sidebarX + 14, sidebarY, sidebarContentWidth, { fontSize: 6 });
 
     sidebarY += 10;
 
