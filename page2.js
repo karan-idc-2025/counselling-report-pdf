@@ -110,11 +110,11 @@ function renderPage2(doc, data, page1Info = {}) {
         const cardContentX = x + 12;
         const cardContentWidth = width - 24;
 
-        // Icon + Title (using colored circle instead of emoji)
-        doc.save();
-        doc.fillColor(PAGE2_COLORS.primaryPurple);
-        doc.circle(cardContentX + 6, contentY + 5, 6).fill();
-        doc.restore();
+        // Icon + Title (using business.jpg image)
+        const businessIconPath = path.join(__dirname, 'images', 'business.jpg');
+        if (fs.existsSync(businessIconPath)) {
+            doc.image(businessIconPath, cardContentX, contentY - 2, { width: 14, height: 14 });
+        }
         
         doc.fillColor(COLORS.black).fontSize(12).font('Helvetica-Bold')
             .text(cluster.title, cardContentX + 18, contentY);
@@ -238,11 +238,11 @@ function renderPage2(doc, data, page1Info = {}) {
         let backupContentY = yPos + 15;
         const backupContentX = layout.marginLeft + 15;
 
-        // Icon + Title (spans full width)
-        doc.save();
-        doc.fillColor(PAGE2_COLORS.primaryPurple);
-        doc.circle(backupContentX + 6, backupContentY + 5, 6).fill();
-        doc.restore();
+        // Icon + Title (spans full width, using business.jpg image)
+        const backupIconPath = path.join(__dirname, 'images', 'business.jpg');
+        if (fs.existsSync(backupIconPath)) {
+            doc.image(backupIconPath, backupContentX, backupContentY - 2, { width: 14, height: 14 });
+        }
         
         doc.fillColor(COLORS.black).fontSize(12).font('Helvetica-Bold')
             .text(backupCluster.title, backupContentX + 20, backupContentY);
