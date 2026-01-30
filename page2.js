@@ -67,13 +67,11 @@ function renderPage2(doc, data, page1Info = {}) {
     // Get layout for current position
     let layout = getContentLayout(yPos);
     
-    // Draw target icon (circle with dot)
-    doc.save();
-    doc.strokeColor(PAGE2_COLORS.primaryPurple).lineWidth(2);
-    doc.circle(layout.marginLeft + 8, yPos + 8, 7).stroke();
-    doc.fillColor(PAGE2_COLORS.primaryPurple);
-    doc.circle(layout.marginLeft + 8, yPos + 8, 3).fill();
-    doc.restore();
+    // Draw target icon (using target.jpeg image)
+    const targetIconPath = path.join(__dirname, 'images', 'target.jpeg');
+    if (fs.existsSync(targetIconPath)) {
+        doc.image(targetIconPath, layout.marginLeft, yPos - 2, { width: 18, height: 18 });
+    }
     
     doc.fillColor(COLORS.black).fontSize(16).font('Helvetica-Bold')
         .text('Career Cluster Recommendations', layout.marginLeft + 22, yPos);

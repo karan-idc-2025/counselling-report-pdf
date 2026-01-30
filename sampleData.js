@@ -2,7 +2,7 @@
 const sampleData = {
   name: "Harkarman Singh",
   board: "CBSE",
-  class: "10",
+  class: "9",
   school: "Vijay Sr. Sec. Public School",
   academics: {
     currentMarks: "76%",
